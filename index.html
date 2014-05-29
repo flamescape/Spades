@@ -9,7 +9,7 @@
 
     <div ng-controller="GameCtrl">
     
-        {{'Game:'}} {{game|json}}
+        <div ng-repeat="c in go.game.cards">Card: {{c}}</div>
     
     </div>
 
@@ -27,6 +27,11 @@
             
             .factory('go', function($goKey, $goConnection, $location, $q){
                 var d = $q.defer();
+                var go = {
+                    ready: d.promise,
+                    game: null,
+                    user: null
+                };
             
                 $goConnection.$ready().then(function(connection) {
                     var q = $location.search();
@@ -36,16 +41,21 @@
                     game.$sync();
                     
                     game.$on('ready', function(){
-                        d.resolve(game);
+                        go.game = game;
+                        go.user = joined.user;
+                        go.room = joined.room;
+                        d.resolve();
                     });
                 });
 
-                return d.promise;
+                return go;
             })
         
-            .controller('GameCtrl', function($scope, go){
-                go.then(function(game){
-                    $scope.game = game;
+            .controller('GameCtrl', function($scope, go, $interval){
+                $scope.go = go;
+                
+                go.ready.then(function(){
+                    go.game.$key('cards').$add(((Math.random()*13)<<0) + ' of spades');
                 });
             })
         
