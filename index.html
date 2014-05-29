@@ -1,0 +1,58 @@
+<!doctype html>
+<html ng-app="app">
+<head>
+    <meta charset="utf-8" /> 
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <title>Spades</title>
+</head>
+<body>
+
+    <div ng-controller="GameCtrl">
+    
+        {{'Game:'}} {{game|json}}
+    
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.6.0/underscore-min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.16/angular.min.js"></script>
+    <script src="https://cdn.goinstant.net/v1/platform.min.js"></script>
+    <script src="https://cdn.goinstant.net/integrations/goangular/latest/goangular.min.js"></script>
+    <script>
+        angular.module('app', ['goangular'])
+        
+            .config(function($goConnectionProvider, $locationProvider){
+                $locationProvider.html5Mode(true);
+                $goConnectionProvider.$set('https://goinstant.net/781fb4c3de1f/spades');
+            })
+            
+            .factory('go', function($goKey, $goConnection, $location, $q){
+                var d = $q.defer();
+            
+                $goConnection.$ready().then(function(connection) {
+                    var q = $location.search();
+                    return connection.room(q.r || 'test').join();
+                }).then(function(joined){
+                    var game = $goKey('game', room.name);
+                    game.$sync();
+                    
+                    game.$on('ready', function(){
+                        d.resolve(game);
+                    });
+                });
+
+                return d.promise;
+            })
+        
+            .controller('GameCtrl', function($scope, go){
+                console.log(1);
+                go.then(function(game){
+                    console.log(2);
+                    $scope.game = game;
+                });
+            })
+        
+        ;
+    </script>
+
+</body>
+</html>
