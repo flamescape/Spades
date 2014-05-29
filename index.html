@@ -32,7 +32,7 @@
                     var q = $location.search();
                     return connection.room(q.r || 'test').join();
                 }).then(function(joined){
-                    var game = $goKey('game', room.name);
+                    var game = $goKey('game', joined.room.name);
                     game.$sync();
                     
                     game.$on('ready', function(){
@@ -44,9 +44,7 @@
             })
         
             .controller('GameCtrl', function($scope, go){
-                console.log(1);
                 go.then(function(game){
-                    console.log(2);
                     $scope.game = game;
                 });
             })
