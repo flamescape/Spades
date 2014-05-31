@@ -35,7 +35,7 @@
         <div ng-repeat="seat in go.game.seats">
             Seat occupied by: {{seat.user}}
             <ul>
-                <li ng-repeat="card in seat.hand|orderBy:'suit'" ng-class="['card','suit'+card.suit]">{{card.num}}{{card.suit}}</li>
+                <li ng-repeat="card in seat.hand|orderBy:'num'|orderBy:'suit':1" ng-class="['card','suit'+card.suit]">{{card.num}}{{card.suit}}</li>
             </ul>
         </div>
         
@@ -87,14 +87,10 @@
                     var deck = buildDeck();
                     
                     if (!go.game.state) {
-                        go.game.$key('seats').$add({
-                            hand: _.sample(deck, 13),
-                            user: go.user
-                        });
-                        for (var i = 0; i < 3; i++) {
+                        for (var i = 0; i <= 3; i++) {
                             go.game.$key('seats').$add({
-                                hand: _.sample(deck, 13),
-                                user: null
+                                hand: deck.slice(i*13,(i*13)+13),
+                                user: i === 0 ? go.user : null
                             });
                         }
                         go.game.$key('state').$set(1);
@@ -106,7 +102,7 @@
                 });
                 
                 var buildDeck = function(){
-                    return '♥♦♣♠'.split('').reduce(function(deck, suit){
+                    return _.shuffle('♥♦♣♠'.split('').reduce(function(deck, suit){
                         for (var i = 2; i <= 14; i++) {
                             deck.push({
                                 suit: suit,
@@ -114,7 +110,7 @@
                             });
                         }
                         return deck;
-                    }, []);
+                    }, []));
                 };
                 
                 console.log(buildDeck());
