@@ -1,16 +1,45 @@
-<!doctype html>
+﻿<!doctype html>
 <html ng-app="app">
 <head>
     <meta charset="utf-8" /> 
     <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
     <title>Spades</title>
+    
+    <style>
+        .card {
+            border: 1px solid #666;
+            border-radius: 5px;
+            display: inline-block;
+            padding: 5px;
+            width: 25px;
+            height: 40px;
+            margin: 2px;
+            box-shadow: 2px 2px 2px rgba(85, 85, 85, 0.27);
+        }
+        .suit♠+.suit♣,
+        .suit♣+.suit♥,
+        .suit♥+.suit♦{
+            margin-left: 30px;
+        }
+        
+        .suit♦, .suit♥ {
+            color: red;
+        }
+    </style>
 </head>
 <body>
 
     <div ng-controller="GameCtrl">
-    
-        <div ng-repeat="c in go.game.cards">Card: {{c}}</div>
-    
+        <button ng-click="deleteGame()">Delete</button>
+        
+        <div ng-repeat="seat in go.game.seats">
+            Seat occupied by: {{seat.user}}
+            <ul>
+                <li ng-repeat="card in seat.hand|orderBy:'suit'" ng-class="['card','suit'+card.suit]">{{card.num}}{{card.suit}}</li>
+            </ul>
+        </div>
+        
+        <div style="white-space: pre">{{go.game|json}}</div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.6.0/underscore-min.js"></script>
@@ -51,12 +80,53 @@
                 return go;
             })
         
-            .controller('GameCtrl', function($scope, go, $interval){
+            .controller('GameCtrl', function($scope, go){
                 $scope.go = go;
                 
                 go.ready.then(function(){
+                    var deck = buildDeck();
+                    
+                    if (!go.game.state) {
+                        go.game.$key('seats').$add({
+                            hand: _.sample(deck, 13),
+                            user: go.user
+                        });
+                        for (var i = 0; i < 3; i++) {
+                            go.game.$key('seats').$add({
+                                hand: _.sample(deck, 13),
+                                user: null
+                            });
+                        }
+                        go.game.$key('state').$set(1);
+                    }
+                    
+                    //go.game.$key('seats').$set()
+                
                     go.game.$key('cards').$add(((Math.random()*13)<<0) + ' of spades');
                 });
+                
+                var buildDeck = function(){
+                    return '♥♦♣♠'.split('').reduce(function(deck, suit){
+                        for (var i = 2; i <= 14; i++) {
+                            deck.push({
+                                suit: suit,
+                                num: i
+                            });
+                        }
+                        return deck;
+                    }, []);
+                };
+                
+                console.log(buildDeck());
+                
+                $scope.deleteGame = function(){
+                    go.game.$remove();
+                    window.location.reload();
+                };
+                
+                $scope.playCard = function(card){
+                    
+                };
             })
         
         ;
