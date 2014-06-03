@@ -34,6 +34,9 @@
             cursor: default;
             background: #ddd;
         }
+        
+        .other-player .card { background: #7896F6; }
+        .other-player .card span { display: none; }
     </style>
 </head>
 <body>
@@ -41,10 +44,10 @@
     <div ng-controller="GameCtrl" ng-class="{'spades-unbroken':!go.game.spadesBroken}">
         <button ng-click="deleteGame()">Delete</button>
         
-        <div ng-repeat="seat in go.game.seats" ng-class="{'active-seat':seat.pos === go.game.activeSeat}">
-            Seat occupied by: {{seat.user}}
+        <div ng-repeat="seat in go.game.seats" ng-class="{'active-seat':seat.pos === getActiveSeat(), 'other-player':seat.user.id !== go.user.id}">
+            Seat occupied by: {{seat.user}} <button ng-if="!seat.user" ng-click="sit(seat)">Sit</button>
             <ul>
-                <li ng-click="playCard(seat, card)" ng-repeat="card in seat.hand|orderBy:'num'|orderBy:'suit':1" ng-class="['card','suit'+card.suit]">{{card.num}}{{card.suit}}</li>
+                <li ng-click="playCard(seat, card)" ng-repeat="card in seat.hand|orderBy:'num'|orderBy:'suit':1" ng-class="['card','suit'+card.suit]"><span>{{card.num}}{{card.suit}}</span></li>
             </ul>
         </div>
         
@@ -156,13 +159,29 @@
                     return true;
                 };
                 
+                $scope.getActiveSeat = function(){
+                    if (_.size(go.game.curTrick) === 4) { return; }
+                    return go.game.activeSeat;
+                };
+                
                 $scope.playCard = function(seat, card){
                     if (!canPlayCard(seat,card)) { return; }
                     
+                    seat.hand = _.without(seat.hand, card);
                     
-                    go.game.$key('seats/'+_.findKeyWhere(go.game.seats, seat)+'/hand').$set(_.without(seat.hand, card));
+                    go.game.activeSeat++;
+                    if (go.game.activeSeat > 3) {
+                        go.game.activeSeat = 0;
+                    }
+                    
+                    go.game.$key('seats/'+_.findKeyWhere(go.game.seats, seat)+'/hand').$set(seat.hand);
                     go.game.$key('curTrick').$add(card);
-                    go.game.$key('activeSeat').$set(go.game.activeSeat < 3 ? go.game.activeSeat + 1 : 0);
+                    go.game.$key('activeSeat').$set(go.game.activeSeat);
+                };
+                
+                $scope.sit = function(seat) {
+                    if (seat.user) { return false; }
+                    go.game.$key('seats/'+_.findKeyWhere(go.game.seats, seat)+'/user').$set(go.user);
                 };
             })
         
